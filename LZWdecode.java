@@ -31,14 +31,12 @@ public class LZWdecode{
 		try{
 			
 			initializeTrie(); // initialize fake trie with node for each symbol
-			
+
 			while(sc.hasNextLine()){
 				String line = sc.nextLine();
 				int phrase = Integer.parseInt(line);
 				trie.findPhrase(phrase);
 			}
-			
-//			trie.printTriePaths();
 			
 		}catch(Exception e){
 			e.printStackTrace(); // get error information
@@ -66,7 +64,6 @@ public class LZWdecode{
 		reader.close();
 		
 		trie.initializeTrie(initialPhrases);
-		
 		return true;
 	}
 }
@@ -112,7 +109,12 @@ class LZWDecodeTrie{
 			Path cur = paths.get(i);
 			while(!cur.hasPhraseNumber(phraseNum)){
 				if(i+1== paths.size()){
-					currentPath.extendPath(++numPhrases, currentPath.getHeadData());
+					if(currentPathPhraseNum == currentPath.getTailPhraseNumber()){
+						currentPath.extendPath(++numPhrases, currentPath.getHeadData());
+					}else{
+						createNewPath(currentPathPhraseNum, currentPath.getHeadData());
+						currentPath = paths.get(paths.size()-1);
+					}
 					currentPathPhraseNum = phraseNum;
 					currentPath.printPath(-1); // print entire path
 					return;
@@ -141,7 +143,6 @@ class LZWDecodeTrie{
 			paths.add(new Path(++numPhrases, (byte) p));
 		}
 		
-//		for(Path p : paths) System.out.println(p);
 		currentPath = paths.get(0);
 		currentPathPhraseNum = paths.get(0).getTailPhraseNumber();
 	}
@@ -216,15 +217,14 @@ class Path{
 	/* if phraseNum = -1 method prints the entire path in the 
 	trie ELSE it prints only up to phraseNum */
 	public void printPath(int phraseNum){
-		//System.out.print("pathid: "+this+" ");
 		Node cur = head;
+		
 		while(cur != null){
-			//System.out.print(cur.getPhraseNumber()+":"+cur.getData()+" ");
-			System.out.write(cur.getData());
+			System.out.write(cur.getData()); // printing each path when one is a carriage return means all following will be missing
+			System.out.flush();
 			if(phraseNum != -1 && cur.getPhraseNumber() == phraseNum) break;
 			cur = cur.getNext();
 		}
-		//System.out.println();
 	}
 }
 
