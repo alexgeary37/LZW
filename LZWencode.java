@@ -44,13 +44,11 @@ public class LZWencode{
 				if(next != -1) first = next;
 				
 				next = (byte) input;
-				//System.out.write(next);
 				trie.findByte(next);
 				if(trie.hasOutput()){
 					trie.dumpOutput();
 					trie.findByte(next);
 				}
-				//if(++i == 200) break;
 			}
 			
 			trie.finishOutput(next);
@@ -194,6 +192,7 @@ class LZWTrie{
 			hasOutput = false;
 			return true;
 		}
+		
 		return false;
 	}
 	
