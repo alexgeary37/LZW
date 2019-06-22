@@ -1,6 +1,8 @@
 /*
 	Alex Geary
 	1188083
+	Samuel Vink
+	1289304
 	
 	LZW bit packer:
 	Program receives input as a stream of numbers, one per line created by the LZW encoder.
@@ -16,18 +18,15 @@ import java.io.BufferedReader;
 
 
 public class LZWpack{
-	private static Scanner sc;
+	private static Scanner sc; // reads phrase numbers from stdin
 	private static BufferedOutputStream outputStream; // writes to stdout
-	private static BufferedReader fileReader; // reads trisetup file
 	private static int numPhrases; // to keep track of how many bits the phrase number needs to be packed with
 	private static int numFreeOutputBits; // keeps track of how many bits are left to fill in output int
 	private static int outputInt; // int to be filled with packed bits for output
 	
-	private static int counter; // test counter
 	
 	
 	public static void main(String[] args){
-	    counter = 0;
 		numFreeOutputBits = 32;
 		outputInt = 0;
 		
@@ -38,11 +37,7 @@ public class LZWpack{
 			
 			/* number of initial phrases in trie + the 
 			one gained from skipping first phrase number */
-			numPhrases = getNumPhrases()+1;
-			
-			/* first phrasenum is always 1 so it's redundant 
-			and can be skipped */
-			sc.nextLine();
+			if(!outputUniqueBytes()) return;
 			
 			// read line of input until there's none left
 			while(sc.hasNextLine()){
@@ -62,24 +57,42 @@ public class LZWpack{
 	
 	
 	// returns the number of phrases the trie is initialized with
-	private static int getNumPhrases() throws Exception{
-		File f = new File("trieSetup.txt");
-		fileReader = new BufferedReader(new FileReader(f));
-		
-		int numPhrases = 0;
+	private static boolean outputUniqueBytes() throws Exception{
 		String line;
-		while((line = fileReader.readLine()) != null) numPhrases++;
 		
-		fileReader.close();
-		return numPhrases;
+		if(sc.hasNextLine()) line = sc.nextLine();
+		else return false;
+		
+		try{
+			numPhrases = Integer.parseInt(line);
+		}catch(Exception e){
+			System.err.println("Error: First line of input was not numeric");
+			return false;
+		}
+		
+		System.out.println(numPhrases); // print number of unique bytes
+		
+		// write all unique bytes to output stream
+		int i = 0;
+		while(i++ < numPhrases){
+			line = sc.nextLine();
+			int b = Integer.parseInt(line);
+			outputStream.write((byte) b); // write unique byte
+			outputStream.flush();
+		}
+		
+		/* first phrasenum is always 1 so it's redundant 
+		and number of phrases can be increased */
+		sc.nextLine();
+		numPhrases++;
+		return true;
 	}
 	
 	/* returns the number of bits required for the phrase number, 
-	log2(y) bits, where y is the number of phrases 
-	currently read in */
+	log2(y) bits, where y is the number of phrases currently read in */
 	private static int getPhraseNumBitCount(int y){
 		int x = 0;
-		while((Math.pow(2, x)) < y) x++;
+		while((Math.pow(2, x)) <= y) x++;
 		return x;
 	}
 	
@@ -128,19 +141,16 @@ public class LZWpack{
 		int shiftAmount = 24;
 		byte[] output = new byte[numBytes];
 		
-		//System.out.println(Integer.toBinaryString(outputInt));
-		
 		// copy bits from output int into 4 separate bytes for writing to standard out
 		for(int i = 0; i < output.length; i++){
 		     output[i] = (byte) (outputInt >>> shiftAmount);
 		     shiftAmount -= 8;
 		}
 		
-		counter++;
 		outputStream.write(output);
 		outputStream.flush();
 		
-        	// clear all outputint bits and update number of unused bits
+        // clear all outputint bits and update number of unused bits
 		outputInt = 0;
 		numFreeOutputBits = 32;
 	}
