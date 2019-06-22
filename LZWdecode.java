@@ -19,9 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class LZWdecode{
-	private static Scanner sc;
-	private static BufferedReader reader;
-	private static LZWDecodeTrie trie;
+	private static Scanner sc; // reads stdin
+	private static LZWDecodeTrie trie; // LZWtrie structure
 	
 	
 	public static void main(String[] args){
@@ -45,23 +44,16 @@ public class LZWdecode{
 	
 	// initializes fake trie with a node for each unique symbol in file
 	private static boolean initializeTrie() throws Exception{
-		File f = new File("trieSetup.txt");
 		ArrayList<Integer> initialPhrases = new ArrayList<Integer>();
 		
-		if(!f.exists()){
-			System.err.println("error: trieSetup.txt does not exist");
-			return false;
+		String line = sc.nextLine();
+		int numPhrases = Integer.parseInt(line);
+		int i = 0;
+		while(i++ < numPhrases){
+			line = sc.nextLine();
+			int uniqueByte = Integer.parseInt(line);
+			initialPhrases.add(uniqueByte);
 		}
-		
-		reader = new BufferedReader(new FileReader(f));
-		
-		String line;
-		while((line = reader.readLine()) != null){
-			int b = Integer.parseInt(line);
-			initialPhrases.add(b);
-		}
-		
-		reader.close();
 		
 		trie.initializeTrie(initialPhrases);
 		return true;
