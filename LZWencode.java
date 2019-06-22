@@ -13,78 +13,86 @@
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileReader;
-import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
 
 public class LZWencode{
-	private static LZWTrie trie;
-	private static BufferedInputStream inputStream;
-	private static BufferedReader reader;
+	private static LZWTrie trie; // LZW trie structure
+	private static BufferedInputStream inputStream; // stdin reader reads file to be compressed
+	private static FileInputStream fileInputStream; // reads from file to be compressed
 	
 	
 	public static void main(String[] args){
-		
-		// create initial try structure and input stream
-		trie = new LZWTrie();
-		inputStream = new BufferedInputStream(System.in);
-		
-		try{
+		if(args.length != 1){
+			System.out.print("Usage: java LZWencode <filename.txt>");
+			System.out.println(" - filename is the name of the file to compress");
+		}else{
 			
-		    if(initializeTrie() == false) return;
-		    
-			int input = -1; // contains the next byte of input
-		    byte first = -1;
-			byte next = -1;
-		    int i = 0;
-			/* while the end of input stream hasn't been reached, 
-			perform LZ78 encoding on input stream */
-			while((input = inputStream.read()) != -1){
-				if(next != -1) first = next;
+			// create initial try structure and input stream
+			trie = new LZWTrie();
+			inputStream = new BufferedInputStream(System.in);
+			
+			try{
 				
-				next = (byte) input;
-				trie.findByte(next);
-				if(trie.hasOutput()){
-					trie.dumpOutput();
+				if(initializeTrie(args[0]) == false) return;
+				
+				/* prints the number of unique bytes in the trie 
+				followed by all unique bytes for LZWpack */
+				trie.printUniqueBytes();
+				
+				int input = -1; // will contain the next byte of input
+				byte first = -1;
+				byte next = -1;
+				
+				/* while the end of input stream hasn't been reached, 
+				perform LZ78 encoding on input stream */
+				while((input = inputStream.read()) != -1){
+					if(next != -1) first = next;
+					
+					next = (byte) input;
 					trie.findByte(next);
+					if(trie.hasOutput()){
+						trie.dumpOutput();
+						trie.findByte(next);
+					}
 				}
+				
+				trie.finishOutput(next);
+				
+				inputStream.close(); // close inputStream
+				
+			}catch(Exception e){
+				e.printStackTrace(); // get error information
 			}
-			
-			trie.finishOutput(next);
-			
-			inputStream.close(); // close inputStream
-			
-		}catch(Exception e){
-			e.printStackTrace(); // get error information
 		}
 	}
 	
 	// initializes trie with all unique characters from file
-	private static boolean initializeTrie() throws Exception{
-		File f = new File("trieSetup.txt");
+	private static boolean initializeTrie(String file) throws Exception{
 		ArrayList<Integer> initialPhrases = new ArrayList<Integer>();
+		File f = new File(file);
 		
 		if(!f.exists()){
-			System.err.println("error: trieSetup.txt does not exist");
+			System.err.println("error: "+file+" does not exist");
 			return false;
 		}
 		
-		reader = new BufferedReader(new FileReader(f));
+		fileInputStream = new FileInputStream(f);
 		
-		String line;
-		while((line = reader.readLine()) != null){
-			int b = Integer.parseInt(line);
-			initialPhrases.add(b);
-		}
+		int input = 0;
+		while((input = fileInputStream.read()) != -1)
+			if(!initialPhrases.contains(input)) initialPhrases.add(input);
 		
-		reader.close();
+		fileInputStream.close();
 		
 		trie.initialize(initialPhrases);
 		
 		return true;
 	}
 }
+
 
 
 /*
@@ -100,7 +108,8 @@ equals n, where n is the number of phrases in the trie. */
 
 class LZWTrie{
 	// variables for each instance of Trie
-	private int phraseNumber, numBranches; // the number for each phrase in the trie
+	private int phraseNumber; // the number for each phrase in trie
+	private int numBranches; // the number of branches in the calling trie
 	private byte mismatch; // the byte/phrase in each subtrie
 	private LZWTrie[] branches; // the subsequent phrases from each subtrie
 	
@@ -194,6 +203,14 @@ class LZWTrie{
 		}
 		
 		return false;
+	}
+	
+	/* prints the number of unique bytes in the trie 
+	followed by all unique bytes for setting up LZWpack */
+	public void printUniqueBytes(){
+		System.out.println(numBranches);
+		for(int i = 0; i < numBranches; i++)
+			System.out.println(branches[i].mismatch);
 	}
 	
 	// prints the output phrase number
