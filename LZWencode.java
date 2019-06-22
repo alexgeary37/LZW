@@ -16,25 +16,25 @@ import java.io.FileInputStream;
 import java.util.ArrayList;
 
 
-public class LZWencode{
+public class LZWencode {
     private static LZWTrie trie; // LZW trie structure
     private static BufferedInputStream inputStream; // stdin reader reads file to be compressed
     private static FileInputStream fileInputStream; // reads from file to be compressed
 
 
-    public static void main(String[] args){
-        if(args.length != 1){
+    public static void main(String[] args) {
+        if (args.length != 1) {
             System.out.print("Usage: java LZWencode <filename.txt>");
             System.out.println(" - filename is the name of the file to compress");
-        }else{
+        } else {
 
             // create initial try structure and input stream
             trie = new LZWTrie();
             inputStream = new BufferedInputStream(System.in);
 
-            try{
+            try {
 
-                if(!initializeTrie(args[0])) return;
+                if (!initializeTrie(args[0])) return;
 
 				/* prints the number of unique bytes in the trie
 				followed by all unique bytes for LZWpack */
@@ -45,10 +45,10 @@ public class LZWencode{
 
 				/* while the end of input stream hasn't been reached,
 				perform LZ78 encoding on input stream */
-                while((input = inputStream.read()) != -1){
+                while ((input = inputStream.read()) != -1) {
                     next = (byte) input;
                     trie.findByte(next);
-                    if(trie.hasOutput()){
+                    if (trie.hasOutput()) {
                         trie.dumpOutput();
                         trie.findByte(next);
                     }
@@ -58,27 +58,27 @@ public class LZWencode{
 
                 inputStream.close(); // close inputStream
 
-            }catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace(); // get error information
             }
         }
     }
 
     // initializes trie with all unique characters from file
-    private static boolean initializeTrie(String file) throws Exception{
+    private static boolean initializeTrie(String file) throws Exception {
         ArrayList<Integer> initialPhrases = new ArrayList<Integer>();
         File f = new File(file);
 
-        if(!f.exists()){
-            System.err.println("error: "+file+" does not exist");
+        if (!f.exists()) {
+            System.err.println("error: " + file + " does not exist");
             return false;
         }
 
         fileInputStream = new FileInputStream(f);
 
         int input = 0;
-        while((input = fileInputStream.read()) != -1)
-            if(!initialPhrases.contains(input)) initialPhrases.add(input);
+        while ((input = fileInputStream.read()) != -1)
+            if (!initialPhrases.contains(input)) initialPhrases.add(input);
 
         fileInputStream.close();
 
