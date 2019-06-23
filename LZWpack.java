@@ -41,7 +41,6 @@ public class LZWpack {
             }
 
             finishOutput(); // write any remaining bits to stdout
-
             outputStream.close();
 
         } catch (Exception e) {
@@ -123,11 +122,13 @@ public class LZWpack {
 
     // output whatever is remaining in the outputInt
     private static void finishOutput() throws Exception {
-        if (numFreeOutputBits < 32)
-            if (((32 - numFreeOutputBits) % 8) == 0)
+        if (numFreeOutputBits < 32) {
+            if (((32 - numFreeOutputBits) % 8) == 0) {
                 writeOutput((32 - numFreeOutputBits) / 8);
-            else
+            } else {
                 writeOutput((32 - numFreeOutputBits) / 8 + 1);
+            }
+        }
     }
 
     // writes 4 bytes to output stream, possibly less if end of input has been reached
