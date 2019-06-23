@@ -1,18 +1,20 @@
 /*
 	Alex Geary
 	1188083
-	
-	Program receives input from .... which are phrase numbers for 
-	a trie datastructure. Trie is initialized with the same nodes 
-	as the LZW encoder and each phrase number that is received is 
-	searched for in the trie and the data within each node on the 
-	path down to the first mismatch is printed as output. The first 
-	mismatch is added on to the end of that path in the trie, with 
+
+	Program receives input from .... which are phrase numbers for
+	a trie datastructure. Trie is initialized with the same nodes
+	as the LZW encoder and each phrase number that is received is
+	searched for in the trie and the data within each node on the
+	path down to the first mismatch is printed as output. The first
+	mismatch is added on to the end of that path in the trie, with
 	a new phrase number and the mismatch symbol included in the node.
 */
 
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.io.BufferedOutputStream;
+
 
 public class LZWdecode {
     private static Scanner sc; // reads stdin
@@ -26,6 +28,7 @@ public class LZWdecode {
         try {
 
             initializeTrie(); // initialize fake trie with node for each symbol
+            sc.nextLine(); // skip first line as phrase has already been written
 
             while (sc.hasNextLine()) {
                 String line = sc.nextLine();
@@ -59,196 +62,90 @@ public class LZWdecode {
 
 
 /*
-LZWDecodeTrie data structure holds a list of paths in a trie structure 
-and has operations to find which path a phrase number belongs to and 
+LZWDecodeTrie data structure holds a list of paths in a trie structure
+and has operations to find which path a phrase number belongs to and
 operations to add new phrase numbers to paths
 */
 
 class LZWDecodeTrie {
     private static int numPhrases; // number of phrases in the trie
-    private static ArrayList<Path> paths; // list of paths down the trie
-    private static Path currentPath; // the current position in the trie
     private static int currentPathPhraseNum; // previous phraseNumber encounter in path
-    private static boolean isFirstPhrase;
+    private static boolean isFirstPhrase; // will be set to false after 1st phrase written
+    private static int[][] dict; // holds phrase numbers and mismatches of LZWtrie
+    private static BufferedOutputStream outputStream;
 
 
     public LZWDecodeTrie() { // LZWDecodeTrie constructor
         numPhrases = 0;
-        paths = new ArrayList<Path>();
-        isFirstPhrase = true;
+
+        dict = new int[1024][2];
+        dict[0][0] = 0;
+        dict[0][1] = 0;
+        outputStream = new BufferedOutputStream(System.out);
     }
 
-
-    // creates a new path in the trie
-    private void createNewPath(int currentPathPhraseNumber, byte data) {
-        Path p = currentPath.clone(currentPathPhraseNumber);
-        p.extendPath(++numPhrases, data);
-        paths.add(p);
-    }
-
-    // finds the given phrase in the trie
-    public void findPhrase(int phraseNum) {
-        if (isFirstPhrase) {
-            isFirstPhrase = false;
-            currentPath.printPath(-1);
-        } else {
-
-            int i = 0;
-            Path cur = paths.get(i);
-            while (!cur.hasPhraseNumber(phraseNum)) {
-                if (i + 1 == paths.size()) {
-                    if (currentPathPhraseNum == currentPath.getTailPhraseNumber()) {
-                        currentPath.extendPath(++numPhrases, currentPath.getHeadData());
-                    } else {
-                        createNewPath(currentPathPhraseNum, currentPath.getHeadData());
-                        currentPath = paths.get(paths.size() - 1);
-                    }
-                    currentPathPhraseNum = phraseNum;
-                    currentPath.printPath(-1); // print entire path
-                    return;
-                }
-
-                cur = paths.get(++i);
-            }
-			
-			/* if we're currently at the end of a path, extend it
-			else create a new path which includes part of this one */
-            if (currentPathPhraseNum == currentPath.getTailPhraseNumber())
-                currentPath.extendPath(++numPhrases, cur.getHeadData());
-            else
-                createNewPath(currentPathPhraseNum, cur.getHeadData());
-
-            currentPath = cur;
-            currentPathPhraseNum = phraseNum;
-            currentPath.printPath(phraseNum); // print part of this path
-        }
-    }
 
     // initializes trie with a node for each unique symbol in file
-    public void initializeTrie(ArrayList<Integer> phrases) {
+    public void initializeTrie(ArrayList<Integer> phrases) throws Exception {
         for (Integer phrase : phrases) {
             int p = (int) phrase;
-            paths.add(new Path(++numPhrases, (byte) p));
+            addToDictionary(0, p);
         }
 
-        currentPath = paths.get(0);
-        currentPathPhraseNum = paths.get(0).getTailPhraseNumber();
+        currentPathPhraseNum = 1;
+        printPath(1);
     }
 
-    // prints all paths in the trie from root to end of path
-    public void printTriePaths() {
-        for (Path p : paths) p.printPath(-1);
-    }
-}
-
-
-// data structure of linked list form holds a list of nodes
-class Path {
-    private Node head, tail;
-
-
-    public Path() { // default constructor
-        head = null;
-        tail = null;
-    }
-
-    public Path(int phraseNum, byte data) { // Path constructor
-        head = new Node(phraseNum, data);
-        tail = head;
-    }
-
-
-    // getters for head data and tail phrase number
-    public byte getHeadData() {
-        return head.getData();
-    }
-
-    public int getTailPhraseNumber() {
-        return tail.getPhraseNumber();
-    }
-
-    // returns a clone of this path up to the given phrase number
-    public Path clone(int phraseNum) {
-        Path path = new Path();
-        Node cur = head;
-
-        while (cur != null) {
-            path.extendPath(cur.getPhraseNumber(), cur.getData());
-            if (cur.getPhraseNumber() == phraseNum) break;
-            cur = cur.getNext();
-        }
-
-        return path;
-    }
-
-    // returns whether the given phrase number is in this Path
-    public boolean hasPhraseNumber(int number) {
-        if (head == null) return false;
-
-        Node cur = head;
-        while (cur != null) {
-            if (cur.getPhraseNumber() == number) return true;
-            cur = cur.getNext();
-        }
-
-        return false;
-    }
-
-    // extends a path with a new node
-    public void extendPath(int phraseNum, byte data) {
-        Node n = new Node(phraseNum, data);
-
-        if (head == null) {
-            head = n;
-            tail = head;
+    /* finds the given phrase in the trie and adds the
+    next one to the dictionary */
+    public void findPhrase(int phraseNum) throws Exception {
+        if (phraseNum == numPhrases + 1) {
+            addToDictionary(currentPathPhraseNum,
+                    currentPathHeadValue(currentPathPhraseNum));
         } else {
-            tail.setNext(n);
+            addToDictionary(currentPathPhraseNum,
+                    currentPathHeadValue(phraseNum));
         }
 
-        tail = n;
+        currentPathPhraseNum = phraseNum;
+        printPath(phraseNum);
     }
 
-    /* if phraseNum = -1 method prints the entire path in the 
-    trie ELSE it prints only up to phraseNum */
-    public void printPath(int phraseNum) {
-        Node cur = head;
+    // adds a new phrase to the dictionary
+    private void addToDictionary(int phraseNum, int mismatch) {
+        if (++numPhrases == dict.length) {
+            int[][] temp = new int[numPhrases + 1024][2];
 
-        while (cur != null) {
-            System.out.write(cur.getData()); // printing each path when one is a carriage return means all following will be missing
-            System.out.flush();
-            if (phraseNum != -1 && cur.getPhraseNumber() == phraseNum) break;
-            cur = cur.getNext();
+            for (int i = 0; i < dict.length; i++) {
+                temp[i][0] = dict[i][0];
+                temp[i][1] = dict[i][1];
+            }
+
+            dict = temp;
         }
-    }
-}
 
-
-// self-referential data structure holds phrase number and byte of data
-class Node {
-    private int phraseNumber;
-    private byte data;
-    private Node next;
-
-    public Node(int phraseNum, byte datum) { // Node constructor
-        phraseNumber = phraseNum;
-        data = datum;
-        next = null;
+        dict[numPhrases][0] = phraseNum;
+        dict[numPhrases][1] = mismatch;
     }
 
-    // getters and setters for phrase number, data and next node
-    public int getPhraseNumber() {
-        return phraseNumber;
+    // returns the mismatch of the first node in the phrase path
+    private int currentPathHeadValue(int phraseNum) {
+        int phraseNumber = phraseNum;
+        int number = dict[phraseNumber][0];
+
+        while (number != 0) {
+            phraseNumber = number;
+            number = dict[phraseNumber][0];
+        }
+
+        return dict[phraseNumber][1];
     }
 
-    public byte getData() {
-        return data;
-    }
+    // prints all bytes that make up this phrase in dictionary
+    private void printPath(int phraseNum) throws Exception {
+        if (dict[phraseNum][0] != 0) printPath(dict[phraseNum][0]);
 
-    public Node getNext() {
-        return next;
-    }
-
-    public void setNext(Node n) {
-        next = n;
+        outputStream.write(dict[phraseNum][1]);
+        outputStream.flush();
     }
 }
