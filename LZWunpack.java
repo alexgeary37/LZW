@@ -1,11 +1,11 @@
 /*
 	Alex Geary
 	1188083
-
-	Program receives a stream of bytes as input. The stream of bytes
-	is a list of integers representing phrase numbers for an LZW trie.
-	The number of bits used to represent each phrase number is basically
-	log2(number of phrases) in the trie. Each phrase number is represented
+	
+	Program receives a stream of bytes as input. The stream of bytes 
+	is a list of integers representing phrase numbers for an LZW trie. 
+	The number of bits used to represent each phrase number is basically 
+	log2(number of phrases) in the trie. Each phrase number is represented 
 	in binary format.
 */
 
@@ -35,8 +35,8 @@ public class LZWunpack {
 
             int input = -1; // contains the next byte of input
             int offset = 24; // offset amount for filling preparationInt with input
-
-			/* holds 4 bytes of input which, once either full or the input
+			
+			/* holds 4 bytes of input which, once either full or the input 
 			has ended, can be prepared for output, numPhrases bits at a time */
             int preparationInt = 0;
 
@@ -46,8 +46,8 @@ public class LZWunpack {
                 // fill prepInt from left to right with each input byte
                 preparationInt = preparationInt | input << offset;
                 offset -= 8; // update offset to shift next input byte to the left by
-
-				/* 4 bytes have been read in to preparationInt so
+				
+				/* 4 bytes have been read in to preparationInt so 
 				it's ready to be output */
                 if (offset == -8) {
                     outputPreparationInt(preparationInt, 32);
@@ -86,8 +86,8 @@ public class LZWunpack {
         }
     }
 
-    /* returns the number of bits required for the phrase number,
-    log2(y) bits, where y is the number of phrases
+    /* returns the number of bits required for the phrase number, 
+    log2(y) bits, where y is the number of phrases 
     currently read in */
     private static int getPhraseNumBitCount(int y) {
         int x = 0;
@@ -109,13 +109,13 @@ public class LZWunpack {
         outputPreparationInt(preparationInt, numPrepBits);
     }
 
-    /* outputs numPhrases worth of bits from the preparationInt
+    /* outputs numPhrases worth of bits from the preparationInt 
     which has just been filled by a number of bytes of input */
     private static void outputPreparationInt(int preparationInt, int numPrepBitsLeft) {
         int prepInt = preparationInt;
         int prepBitsRemaining = numPrepBitsLeft;
-
-		/* while the number of bits in the preparation int
+		
+		/* while the number of bits in the preparation int 
 		is more than num bits to output */
         while (prepBitsRemaining >= getPhraseNumBitCount(numPhrases) - numLeftOverOutputBits) {
 
@@ -124,8 +124,8 @@ public class LZWunpack {
             int outputNumber = leftOverOutputBits >>> 32 - (numLeftOverOutputBits + numBits);
             outputNumber = outputNumber | prepInt >>> 32 - numBits;
             numLeftOverOutputBits = leftOverOutputBits = 0;
-
-			/* there will never be a zero phrase number
+			
+			/* there will never be a zero phrase number 
 			so this means unpacking is finished */
             if (outputNumber == 0) break;
 
