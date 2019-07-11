@@ -1,12 +1,12 @@
 /*
-	Alex Geary
-	1188083
-	
-	Program receives a stream of bytes as input. The stream of bytes 
-	is a list of integers representing phrase numbers for an LZW trie. 
-	The number of bits used to represent each phrase number is basically 
-	log2(number of phrases) in the trie. Each phrase number is represented 
-	in binary format.
+Alex Geary
+1188083
+
+Program receives a stream of bytes as input. The stream of bytes 
+is a list of integers representing phrase numbers for an LZW trie. 
+The number of bits used to represent each phrase number is basically 
+log2(number of phrases) in the trie. Each phrase number is represented 
+in binary format.
 */
 
 import java.io.BufferedInputStream;
@@ -35,9 +35,9 @@ public class LZWunpack {
 
             int input = -1; // contains the next byte of input
             int offset = 24; // offset amount for filling preparationInt with input
-			
-			/* holds 4 bytes of input which, once either full or the input 
-			has ended, can be prepared for output, numPhrases bits at a time */
+            
+            /* holds 4 bytes of input which, once either full or the input 
+            has ended, can be prepared for output, numPhrases bits at a time */
             int preparationInt = 0;
 
             // read all of input stream
@@ -46,9 +46,9 @@ public class LZWunpack {
                 // fill prepInt from left to right with each input byte
                 preparationInt = preparationInt | input << offset;
                 offset -= 8; // update offset to shift next input byte to the left by
-				
-				/* 4 bytes have been read in to preparationInt so 
-				it's ready to be output */
+                
+                /* 4 bytes have been read in to preparationInt so 
+                it's ready to be output */
                 if (offset == -8) {
                     outputPreparationInt(preparationInt, 32);
                     preparationInt = 0;
@@ -80,9 +80,10 @@ public class LZWunpack {
 
         // write all unique bytes to output stream
         int i = 0;
-        while (i++ < numPhrases) {
+        while (i < numPhrases) {
             int input = inputStream.read();
             System.out.println(input); // write unique bytes
+            i++;
         }
     }
 
@@ -114,9 +115,9 @@ public class LZWunpack {
     private static void outputPreparationInt(int preparationInt, int numPrepBitsLeft) {
         int prepInt = preparationInt;
         int prepBitsRemaining = numPrepBitsLeft;
-		
-		/* while the number of bits in the preparation int 
-		is more than num bits to output */
+        
+        /* while the number of bits in the preparation int 
+        is more than num bits to output */
         while (prepBitsRemaining >= getPhraseNumBitCount(numPhrases) - numLeftOverOutputBits) {
 
             // number of bits which consitute the output number
@@ -124,9 +125,9 @@ public class LZWunpack {
             int outputNumber = leftOverOutputBits >>> 32 - (numLeftOverOutputBits + numBits);
             outputNumber = outputNumber | prepInt >>> 32 - numBits;
             numLeftOverOutputBits = leftOverOutputBits = 0;
-			
-			/* there will never be a zero phrase number 
-			so this means unpacking is finished */
+            
+            /* there will never be a zero phrase number 
+            so this means unpacking is finished */
             if (outputNumber == 0) break;
 
             outputPhraseNumber(outputNumber); // output number to stdout
