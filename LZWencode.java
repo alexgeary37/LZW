@@ -1,13 +1,13 @@
 /*
-	Alex Geary
-	1188083
+Alex Geary
+1188083
 
-	LZW encoder:
-	Program initializes a trie structure with all the unique bytes read
-	in from a file which contains all the unique bytes from the file to
-	be compressed. Program receives standard input of a file and proceeds
-	to compress the file using the LZW algorithm. Output of program is
-	a list of phrase numbers which will be compressed by a bit packer.
+LZW encoder:
+Program initializes a trie structure with all the unique bytes read
+in from a file which contains all the unique bytes from the file to
+be compressed. Program receives standard input of a file and proceeds
+to compress the file using the LZW algorithm. Output of program is
+a list of phrase numbers which will be compressed by a bit packer.
 */
 
 import java.io.BufferedInputStream;
@@ -35,16 +35,16 @@ public class LZWencode {
             try {
 
                 if (!initializeTrie(args[0])) return;
-
-				/* prints the number of unique bytes in the trie
-				followed by all unique bytes for LZWpack */
+                
+                /* prints the number of unique bytes in the trie
+                followed by all unique bytes for LZWpack */
                 trie.printUniqueBytes();
 
                 int input = -1; // will contain the next byte of input
                 byte next = -1;
-
-				/* while the end of input stream hasn't been reached,
-				perform LZ78 encoding on input stream */
+                
+                /* while the end of input stream hasn't been reached,
+                perform LZ78 encoding on input stream */
                 while ((input = inputStream.read()) != -1) {
                     next = (byte) input;
                     trie.findByte(next);
@@ -83,7 +83,6 @@ public class LZWencode {
         fileInputStream.close();
 
         trie.initialize(initialPhrases);
-
         return true;
     }
 }
@@ -148,12 +147,13 @@ class LZWTrie {
                     currentTrie = current;
                     setOutputPhraseNumber(currentTrie.phraseNumber);
                     return;
-                } else {
-                    if (i + 1 < currentTrie.numBranches)
-                        current = currentTrie.branches[i + 1];
                 }
+                
+                i++;
+                
+                if (i < currentTrie.numBranches) current = currentTrie.branches[i];
 
-            } while (++i < currentTrie.numBranches);
+            } while (i < currentTrie.numBranches);
         }
 
         addPhrase(b); // add new phrase to trie
@@ -167,7 +167,9 @@ class LZWTrie {
             increaseBranches(); // handle number of branches is exceeding set length
 
         // add new trie to the branches
-        currentTrie.branches[currentTrie.numBranches++] = new LZWTrie(++numPhrases, mismatch);
+        numPhrases++;
+        currentTrie.branches[currentTrie.numBranches] = new LZWTrie(numPhrases, mismatch);
+        numBranches++;
     }
 
     // searches trie for byte and adds it if it hasn't already been added
@@ -178,7 +180,9 @@ class LZWTrie {
         // add new trie to the branches
         for (Integer phrase : phrases) {
             int p = (int) phrase;
-            currentTrie.branches[currentTrie.numBranches++] = new LZWTrie(++numPhrases, (byte) p);
+            numPhrases++;
+            currentTrie.branches[currentTrie.numBranches] = new LZWTrie(numPhrases, (byte) p);
+            numBranches++;
         }
     }
 
@@ -202,8 +206,7 @@ class LZWTrie {
     followed by all unique bytes for setting up LZWpack */
     public void printUniqueBytes() {
         System.out.println(numBranches);
-        for (int i = 0; i < numBranches; i++)
-            System.out.println(branches[i].mismatch);
+        for (int i = 0; i < numBranches; i++) System.out.println(branches[i].mismatch);
     }
 
     // prints the output phrase number
@@ -222,8 +225,11 @@ class LZWTrie {
         LZWTrie current = currentTrie.branches[0];
 
         // find branch which matches input byte
-        int i = 0;
-        while (current.mismatch != b) current = currentTrie.branches[++i];
+        int i = 1;
+        while (current.mismatch != b) {
+            current = currentTrie.branches[i];
+            i++;
+        }
 
         setOutputPhraseNumber(current.phraseNumber);
     }
