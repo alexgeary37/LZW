@@ -1,14 +1,14 @@
 /*
-	Alex Geary
-	1188083
+Alex Geary
+1188083
 
-	Program receives input from .... which are phrase numbers for
-	a trie datastructure. Trie is initialized with the same nodes
-	as the LZW encoder and each phrase number that is received is
-	searched for in the trie and the data within each node on the
-	path down to the first mismatch is printed as output. The first
-	mismatch is added on to the end of that path in the trie, with
-	a new phrase number and the mismatch symbol included in the node.
+Program receives input from .... which are phrase numbers for
+a trie datastructure. Trie is initialized with the same nodes
+as the LZW encoder and each phrase number that is received is
+searched for in the trie and the data within each node on the
+path down to the first mismatch is printed as output. The first
+mismatch is added on to the end of that path in the trie, with
+a new phrase number and the mismatch symbol included in the node.
 */
 
 import java.util.Scanner;
@@ -48,10 +48,11 @@ public class LZWdecode {
         String line = sc.nextLine();
         int numPhrases = Integer.parseInt(line);
         int i = 0;
-        while (i++ < numPhrases) {
+        while (i < numPhrases) {
             line = sc.nextLine();
             int uniqueByte = Integer.parseInt(line);
             initialPhrases.add(uniqueByte);
+            i++;
         }
 
         trie.initializeTrie(initialPhrases);
@@ -100,11 +101,9 @@ class LZWDecodeTrie {
     next one to the dictionary */
     public void findPhrase(int phraseNum) throws Exception {
         if (phraseNum == numPhrases + 1) {
-            addToDictionary(currentPathPhraseNum,
-                    currentPathHeadValue(currentPathPhraseNum));
+            addToDictionary(currentPathPhraseNum, currentPathHeadValue(currentPathPhraseNum));
         } else {
-            addToDictionary(currentPathPhraseNum,
-                    currentPathHeadValue(phraseNum));
+            addToDictionary(currentPathPhraseNum, currentPathHeadValue(phraseNum));
         }
 
         currentPathPhraseNum = phraseNum;
@@ -113,7 +112,9 @@ class LZWDecodeTrie {
 
     // adds a new phrase to the dictionary
     private void addToDictionary(int phraseNum, int mismatch) {
-        if (++numPhrases == dict.length) {
+        numPhrases++;
+        
+        if (numPhrases == dict.length) {
             int[][] temp = new int[numPhrases + 1024][2];
 
             for (int i = 0; i < dict.length; i++) {
