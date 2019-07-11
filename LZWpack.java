@@ -1,11 +1,11 @@
 /*
-	Alex Geary
-	1188083
+Alex Geary
+1188083
 
-	LZW bit packer:
-	Program receives input as a stream of numbers, one per line created by the LZW encoder.
-	Each number is a phrase number which is output in log2p bits where p is the number of
-	phrases that the encoder has at that time of its output.
+LZW bit packer:
+Program receives input as a stream of numbers, one per line created by the LZW encoder.
+Each number is a phrase number which is output in log2p bits where p is the number of
+phrases that the encoder has at that time of its output.
 */
 
 import java.util.Scanner;
@@ -28,9 +28,9 @@ public class LZWpack {
         outputStream = new BufferedOutputStream(System.out);
 
         try {
-
-			/* number of initial phrases in trie + the
-			one gained from skipping first phrase number */
+            
+            /* number of initial phrases in trie + the
+            one gained from skipping first phrase number */
             if (!outputUniqueBytes()) return;
 
             // read line of input until there's none left
@@ -53,9 +53,11 @@ public class LZWpack {
     private static boolean outputUniqueBytes() throws Exception {
         String line;
 
-        if (sc.hasNextLine()) line = sc.nextLine();
-        else return false;
-
+        if (sc.hasNextLine())
+            line = sc.nextLine();
+        else
+            return false;
+            
         try {
             numPhrases = Integer.parseInt(line);
         } catch (Exception e) {
@@ -67,15 +69,16 @@ public class LZWpack {
 
         // write all unique bytes to output stream
         int i = 0;
-        while (i++ < numPhrases) {
+        while (i < numPhrases) {
             line = sc.nextLine();
             int b = Integer.parseInt(line);
             outputStream.write((byte) b); // write unique byte
             outputStream.flush();
+            i++;
         }
-
-		/* first phrasenum is always 1 so it's redundant
-		and number of phrases can be increased */
+        
+        /* first phrasenum is always 1 so it's redundant
+        and number of phrases can be increased */
         sc.nextLine();
         numPhrases++;
         return true;
@@ -112,9 +115,9 @@ public class LZWpack {
             // fill rest of output int with limited num of phraseNum bits
             outputInt = outputInt | phraseNum >>> shiftRightAmount;
             writeOutput(4);
-
-			/* copy remaining phraseNum bits into output int
-			and update the number of unused bits */
+            
+            /* copy remaining phraseNum bits into output int
+            and update the number of unused bits */
             outputInt = phraseNum << 32 - shiftRightAmount;
             numFreeOutputBits -= shiftRightAmount;
         }
