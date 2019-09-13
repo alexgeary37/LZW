@@ -24,8 +24,7 @@ public class LZWencode {
 
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.out.print("Usage: java LZWencode <filename.txt>");
-            System.out.println(" - filename is the name of the file to compress");
+            System.out.println("Usage: java LZWencode <filename.suffix>");
         } else {
 
             // create initial try structure and input stream
